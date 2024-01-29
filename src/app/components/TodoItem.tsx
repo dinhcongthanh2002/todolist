@@ -16,8 +16,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
   deleteTask,
   onDone,
 }) => {
-  console.log(data);
-
   return (
     <div
       className={`${data.isDone ? "bg-red-100" : "bg-gray-200"} w-full px-4 py-4 border-b border-gray-400 flex items-center justify-between`}

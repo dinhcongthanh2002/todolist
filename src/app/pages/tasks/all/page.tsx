@@ -17,7 +17,6 @@ const AllDay = () => {
   const [valueDate, setValueDate] = useRecoilState<string>(initInputDate);
   const [valueViewDay, setValueViewDay] =
     useRecoilState<string>(initValueViewDay);
-  // const todayTasks = tasks.filter((task) => task.valueDate === valueViewDay);
   // Lọc công việc dựa trên ngày đã chọn
   const filteredTasks =
     valueViewDay === "all"
@@ -29,14 +28,15 @@ const AllDay = () => {
     // new Date(b.valueDate) - new Date(a.valueDate),
     const dateA = new Date(a.valueDate).getTime();
     const dateB = new Date(b.valueDate).getTime();
-    return dateB - dateA; // Sắp xếp theo thời gian giảm dần
+    // Sắp xếp theo thời gian giảm dần
+    return dateB - dateA;
   });
 
   useEffect(() => {
     // Load công việc từ local storage khi component được mount
     const storedTasksString = localStorage.getItem("tasks");
     const storedTasks =
-      storedTasksString && typeof storedTasksString === "string"
+      storedTasksString && JSON.parse(storedTasksString)
         ? JSON.parse(storedTasksString)
         : [];
     setTasks(storedTasks);
@@ -58,7 +58,7 @@ const AllDay = () => {
   };
   const addTask = (e: any) => {
     e.preventDefault();
-    if (valueTask.trim() !== "") {
+    if (valueTask.trim() && valueDate.trim() !== "") {
       setTasks((prev: any) => {
         const newTasks: any = [...tasks, { valueTask, valueDate }];
 
@@ -73,25 +73,25 @@ const AllDay = () => {
   };
   //Xóa công việc theo index
   const deleteTask = (index: number) => {
-    const updatedTasks = [...tasks];
+    const updatedTasks = [...sortedTasks];
     updatedTasks.splice(index, 1);
     setTasks(updatedTasks);
-
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
   //đánh dấu hoàn thành công việc
   const handleTaskDone = (index: number) => {
-    setTasks((git) => {
-      // Di chuyển công việc xuống cuối danh sách và cập nhật trạng thái
-      const updatedTasks = [...sortedTasks];
-      // Lấy task ra khỏi vị trí index
-      const task = updatedTasks.splice(index, 1)[0];
-      // Thêm task vào cuối danh sách với trạng thái mới
-      updatedTasks.push({ ...task, isDone: true, buttonType: "undo" });
-      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
-      return updatedTasks;
-    });
+    // setTasks((prev) => {
+    // Di chuyển công việc xuống cuối danh sách và cập nhật trạng thái
+    const updatedTasks = [...sortedTasks];
+    // Lấy task ra khỏi vị trí index
+    const task = updatedTasks.splice(index, 1)[0];
+    // Thêm task vào cuối danh sách với trạng thái mới
+    updatedTasks.push({ ...task, isDone: true, buttonType: "undo" });
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    setTasks(updatedTasks);
+    // });
   };
+  console.log(tasks);
   return (
     <div className={"w-full h-screen flex items-center justify-center"}>
       <div>
