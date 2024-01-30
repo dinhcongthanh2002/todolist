@@ -1,6 +1,7 @@
 import React from "react";
 interface TodoItemProps {
   data: {
+    id: string;
     valueTask: string;
     valueDate: string;
     isDone: boolean;

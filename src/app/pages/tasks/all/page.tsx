@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import TodoItem from "@/app/components/TodoItem";
 import { useRecoilState } from "recoil";
+import uuid from "uuid";
 import {
   initInputDate,
   initInputTask,
@@ -17,21 +18,7 @@ const AllDay = () => {
   const [valueDate, setValueDate] = useRecoilState<string>(initInputDate);
   const [valueViewDay, setValueViewDay] =
     useRecoilState<string>(initValueViewDay);
-  // Lọc công việc dựa trên ngày đã chọn
-  const filteredTasks =
-    valueViewDay === "all"
-      ? tasks
-      : tasks.filter((task) => task.valueDate === valueViewDay);
-  // sắp xếp công việc theo ngày
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    // Number(a.isDone) - Number(b.isDone),
-    // new Date(b.valueDate) - new Date(a.valueDate),
-    const dateA = new Date(a.valueDate).getTime();
-    const dateB = new Date(b.valueDate).getTime();
-    // Sắp xếp theo thời gian giảm dần
-    return dateB - dateA;
-  });
-
+  let uuid = crypto.randomUUID();
   useEffect(() => {
     // Load công việc từ local storage khi component được mount
     const storedTasksString = localStorage.getItem("tasks");
@@ -41,6 +28,33 @@ const AllDay = () => {
         : [];
     setTasks(storedTasks);
   }, []);
+  // Lọc công việc dựa trên ngày đã chọn
+  // const filteredTasks =
+  //   valueViewDay === "all"
+  //     ? tasks
+  //     : tasks.filter((task) => task.valueDate === valueViewDay);
+  // sắp xếp công việc theo ngày
+  // const sortedTasks = [...filteredTasks].sort((a, b) => {
+  //   const dateA = new Date(a.valueDate).getTime();
+  //   const dateB = new Date(b.valueDate).getTime();
+  //   // Sắp xếp theo thời gian giảm dần
+  //   return dateB - dateA;
+  // });
+  const sortedTasks = [...tasks]
+    .filter((task) => task.valueDate === valueViewDay || valueViewDay === "all")
+    .sort((a, b) => {
+      // Sắp xếp theo ngày mới nhất trước, rồi đến công việc đã hoàn thành
+      const isADone = !a.isDone;
+      const isBDone = !b.isDone;
+      if (isADone !== isBDone) {
+        // Đưa công việc đã hoàn thành lên cuối
+        return isBDone - isADone;
+      }
+      const dateA = new Date(a.valueDate).getTime();
+      const dateB = new Date(b.valueDate).getTime();
+      // Sắp xếp theo ngày giảm dần
+      return dateB - dateA;
+    });
   const handleValueInput = (e: any): void => {
     setValueTask(e.target.value);
   };
@@ -60,8 +74,13 @@ const AllDay = () => {
     e.preventDefault();
     if (valueTask.trim() && valueDate.trim() !== "") {
       setTasks((prev: any) => {
-        const newTasks: any = [...tasks, { valueTask, valueDate }];
-
+        const newTask = {
+          id: uuid, // Generate a unique ID for the new task
+          valueTask,
+          valueDate,
+        };
+        const newTasks: any = [...prev, newTask];
+        const sortTasks = sortedTasks(newTasks);
         //lưu vào local storage
         const jsonTasks: any = JSON.stringify(newTasks);
         localStorage.setItem("tasks", jsonTasks);
@@ -71,7 +90,7 @@ const AllDay = () => {
       setValueDate("");
     }
   };
-  //Xóa công việc theo index
+  // Xóa công việc theo index
   const deleteTask = (index: number) => {
     const updatedTasks = [...sortedTasks];
     updatedTasks.splice(index, 1);
@@ -80,7 +99,6 @@ const AllDay = () => {
   };
   //đánh dấu hoàn thành công việc
   const handleTaskDone = (index: number) => {
-    // setTasks((prev) => {
     // Di chuyển công việc xuống cuối danh sách và cập nhật trạng thái
     const updatedTasks = [...sortedTasks];
     // Lấy task ra khỏi vị trí index
@@ -89,9 +107,8 @@ const AllDay = () => {
     updatedTasks.push({ ...task, isDone: true, buttonType: "undo" });
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
     setTasks(updatedTasks);
-    // });
   };
-  console.log(tasks);
+
   return (
     <div className={"w-full h-screen flex items-center justify-center"}>
       <div>
@@ -145,7 +162,7 @@ const AllDay = () => {
               {sortedTasks.length > 0 &&
                 sortedTasks.map((task, index: number) => (
                   <TodoItem
-                    key={index}
+                    key={task.id}
                     index={index}
                     data={task}
                     deleteTask={deleteTask}

@@ -93,6 +93,16 @@ export default function Home() {
 
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
+  const handleTaskDone = (index: number) => {
+    // Di chuyển công việc xuống cuối danh sách và cập nhật trạng thái
+    const updatedTasks = [...todayTasks];
+    // Lấy task ra khỏi vị trí index
+    const task = updatedTasks.splice(index, 1)[0];
+    // Thêm task vào cuối danh sách với trạng thái mới
+    updatedTasks.push({ ...task, isDone: true, buttonType: "undo" });
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    setTasks(updatedTasks);
+  };
   return (
     <div
       className={`${darkMode && "dark"} bg-neutral-100 dark:bg-neutral-600 h-screen `}
@@ -102,7 +112,6 @@ export default function Home() {
           <input
             className={"px-4 py-2 border-[1px] rounded"}
             type="date"
-            value={valueDate}
             onChange={handleInputValueDate}
           />
           <div>
@@ -203,6 +212,7 @@ export default function Home() {
                       index={index}
                       data={data}
                       deleteTask={deleteTask}
+                      onDone={handleTaskDone}
                     />
                   ))}
               </div>
