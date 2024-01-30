@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import TodoItem from "@/app/components/TodoItem";
 import { useRecoilState } from "recoil";
-import uuid from "uuid";
 import {
   initInputDate,
   initInputTask,
@@ -44,8 +43,8 @@ const AllDay = () => {
     .filter((task) => task.valueDate === valueViewDay || valueViewDay === "all")
     .sort((a, b) => {
       // Sắp xếp theo ngày mới nhất trước, rồi đến công việc đã hoàn thành
-      const isADone = !a.isDone;
-      const isBDone = !b.isDone;
+      const isADone = !a.isDone ? 1 : 0;
+      const isBDone = !b.isDone ? 1 : 0;
       if (isADone !== isBDone) {
         // Đưa công việc đã hoàn thành lên cuối
         return isBDone - isADone;
@@ -55,6 +54,25 @@ const AllDay = () => {
       // Sắp xếp theo ngày giảm dần
       return dateB - dateA;
     });
+
+  type Task = {
+    title: string;
+    isDone: boolean;
+    valueDate: string;
+  };
+  const sortTasks = (tasks: Task[]) => {
+    return tasks.sort((a: Task, b: Task) => {
+      // Sắp xếp theo ngày mới nhất trước, rồi đến công việc đã hoàn thành
+      const isADone = !a.isDone ? 1 : 0;
+      const isBDone = !b.isDone ? 1 : 0;
+      if (isADone !== isBDone) {
+        return isBDone - isADone; // Đưa công việc đã hoàn thành xuống dưới
+      }
+      const dateA = new Date(a.valueDate).getTime();
+      const dateB = new Date(b.valueDate).getTime();
+      return dateB - dateA; // Sắp xếp theo ngày giảm dần
+    });
+  };
   const handleValueInput = (e: any): void => {
     setValueTask(e.target.value);
   };
@@ -73,18 +91,31 @@ const AllDay = () => {
   const addTask = (e: any) => {
     e.preventDefault();
     if (valueTask.trim() && valueDate.trim() !== "") {
-      setTasks((prev: any) => {
-        const newTask = {
+      // setTasks((prev: any) => {
+      //   const newTask = {
+      //     id: uuid, // Generate a unique ID for the new task
+      //     valueTask,
+      //     valueDate,
+      //   };
+      //   const newTasks: any = [...prev, newTask];
+      //   // const sortTasks = sortedTasks(newTasks);
+      //   //lưu vào local storage
+      //   const jsonTasks: any = JSON.stringify(newTasks);
+      //   localStorage.setItem("tasks", jsonTasks);
+      //   return newTasks;
+      // });
+      // setValueTask("");
+      // setValueDate("");
+      setTasks((prevTasks: Task[]) => {
+        const newTask: Task = {
           id: uuid, // Generate a unique ID for the new task
           valueTask,
           valueDate,
         };
-        const newTasks: any = [...prev, newTask];
-        const sortTasks = sortedTasks(newTasks);
-        //lưu vào local storage
-        const jsonTasks: any = JSON.stringify(newTasks);
-        localStorage.setItem("tasks", jsonTasks);
-        return newTasks;
+        const newTasks = [...prevTasks, newTask];
+        const sortedTasks = sortTasks(newTasks); // Sắp xếp lại danh sách
+        localStorage.setItem("tasks", JSON.stringify(sortedTasks));
+        return sortedTasks;
       });
       setValueTask("");
       setValueDate("");
