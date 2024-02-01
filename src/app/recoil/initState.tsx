@@ -1,7 +1,6 @@
 "use client";
 
 import { atom } from "recoil";
-import { number } from "prop-types";
 
 export const initState: any = atom({
   key: "weatherData",

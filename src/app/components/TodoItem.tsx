@@ -1,7 +1,7 @@
 import React from "react";
 interface TodoItemProps {
   data: {
-    id: string;
+    id: number;
     valueTask: string;
     valueDate: string;
     isDone: boolean;
@@ -19,15 +19,18 @@ const TodoItem: React.FC<TodoItemProps> = ({
 }) => {
   return (
     <div
-      className={`${data.isDone ? "bg-red-100" : "bg-gray-200"} w-full px-4 py-4 border-b border-gray-400 flex items-center justify-between`}
+      className={`${data.isDone ? "bg-[#88AB8E]" : "bg-[#E36414]"} w-full px-4 py-4 border-b border-white flex items-center justify-between`}
     >
       <div>
         <p
-          className={`${data.isDone ? "line-through decoration-red-700 decoration-2 text-decoration-none" : "no-underline"}`}
+          className={`${data.isDone ? "line-through decoration-black decoration-2 text-decoration-none" : "no-underline"}`}
         >
           {data.valueTask}
         </p>
         <p className={"text-gray-500 text-sm italic"}>{data.valueDate}</p>
+        {/*<p className={"text-gray-500 text-sm italic"}>*/}
+        {/*  Hoàn thành vào lúc: 17:20*/}
+        {/*</p>*/}
       </div>
       <div className={"flex text-white"}>
         <div
@@ -37,7 +40,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
           Xóa
         </div>
         <div
-          className={`py-2 px-4 rounded font-bold bg-sky-300 cursor-pointer ml-2`}
+          className={`py-2 px-4 rounded font-bold bg-sky-400 cursor-pointer ml-2`}
           onClick={() => onDone(index)}
         >
           Xong

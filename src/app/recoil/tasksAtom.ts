@@ -3,7 +3,7 @@ import { atom } from "recoil";
 
 export const initTasks = atom<
   {
-    id: string;
+    id: number;
     valueTask: string;
     valueDate: string;
     isDone: boolean;
