@@ -128,30 +128,51 @@ const AllDay = () => {
         label: "Tất cả công việc",
         data: dataCount,
         backgroundColor: backgroundColors,
-        borderColor: ["#163020"],
-        borderWidth: 1,
+        // borderColor: ["#163020"],
+        // borderWidth: 1,
       },
     ],
   };
-  // const data = {
-  //   labels: labels,
-  //   datasets: [
-  //     {
-  //       label: "Đã hoàn thành công việc",
-  //       data: dataCountCompleted,
-  //       backgroundColor: ["#88AB8E"],
-  //       borderColor: ["#163020"],
-  //       borderWidth: 1,
+  const completedTasksCount = sortedTasks.filter((task) => task.isDone).length;
+  const uncompletedTasksCount = sortedTasks.length - completedTasksCount;
+  console.log(completedTasksCount, uncompletedTasksCount);
+  // const options = {
+  //   tooltips: {
+  //     callbacks: {
+  //       label: (tooltipItem: any, data: any) => {
+  //         const label = data.labels[tooltipItem.index];
+  //         const value =
+  //           data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
+  //
+  //         return (
+  //           `${label}: ${value}\n` +
+  //           `Đã hoàn thành: ${completedTasksCount}\n` +
+  //           `Chưa hoàn thành: ${uncompletedTasksCount}`
+  //         );
+  //       },
   //     },
-  //     {
-  //       label: "Chưa hoàn thành công việc",
-  //       data: dataCountNotCompleted,
-  //       backgroundColor: ["#E36414"],
-  //       borderColor: ["#9A031E"],
-  //       borderWidth: 1,
-  //     },
-  //   ],
+  //   },
   // };
+
+  const options = {
+    plugins: {
+      legend: {
+        position: "bottom",
+      },
+      response: true,
+      tooltip: {
+        titleColor: "#fff",
+        callbacks: {
+          label: () => {
+            return (
+              `Đã hoàn thành: ${completedTasksCount} \n` +
+              `Chưa hoàn thành: ${uncompletedTasksCount}`
+            );
+          },
+        },
+      },
+    },
+  };
 
   return (
     <div className={"w-full h-screen flex items-center justify-center"}>
@@ -237,7 +258,7 @@ const AllDay = () => {
         </div>
       </div>
       <div className={"ml-20"}>
-        <Doughnut data={data} />
+        <Doughnut data={data} options={options} />
       </div>
     </div>
   );

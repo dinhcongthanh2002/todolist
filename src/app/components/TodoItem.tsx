@@ -28,9 +28,6 @@ const TodoItem: React.FC<TodoItemProps> = ({
           {data.valueTask}
         </p>
         <p className={"text-gray-500 text-sm italic"}>{data.valueDate}</p>
-        {/*<p className={"text-gray-500 text-sm italic"}>*/}
-        {/*  Hoàn thành vào lúc: 17:20*/}
-        {/*</p>*/}
       </div>
       <div className={"flex text-white"}>
         <div
