@@ -3,23 +3,33 @@
 import React, { useEffect, useState } from "react";
 import TodoItem from "@/app/components/TodoItem";
 import { useRecoilState } from "recoil";
+
+import Link from "next/link";
+import { initTasks } from "@/app/recoil/tasksAtom";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Legend,
+  Tooltip,
+  CategoryScale,
+  LinearScale,
+} from "chart.js";
+import { Bar, Doughnut } from "react-chartjs-2";
+import { FaPlus } from "react-icons/fa";
 import {
   initInputDate,
   initInputTask,
   initValueViewDay,
 } from "@/app/recoil/initState";
-import Link from "next/link";
-import { initTasks } from "@/app/recoil/tasksAtom";
-import { Chart as ChartJS, ArcElement, Legend, Tooltip } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
 
 const AllDay = () => {
   const [tasks, setTasks] = useRecoilState(initTasks);
-  const [valueTask, setValueTask] = useRecoilState<string>(initInputTask);
-  const [valueDate, setValueDate] = useRecoilState<string>(initInputDate);
-  const [valueViewDay, setValueViewDay] =
-    useRecoilState<string>(initValueViewDay);
+  const [valueTask, setValueTask] = useRecoilState(initInputTask);
+  const [valueDate, setValueDate] = useRecoilState(initInputDate);
+  const [valueViewDay, setValueViewDay] = useRecoilState(initValueViewDay);
+  // const [count, setCount] = useRecoilState(initCountState);
   const [count, setCount] = useState(1);
+  const [selectedOption, setSelectedOption] = useState("Tổng quan");
   // let uuid = crypto.randomUUID();
   useEffect(() => {
     // Load công việc từ local storage khi component được mount
@@ -34,12 +44,14 @@ const AllDay = () => {
   const sortedTasks: any[] = [...tasks].filter(
     (task) => task.valueDate === valueViewDay || valueViewDay === "all",
   );
-  type Task = {
+  interface Task {
+    id: number;
     title: string;
     isDone: boolean;
+    valueTask: string;
     valueDate: string;
-    id: number;
-  };
+    buttonType: "done" | "undo";
+  }
   const sortTasks = (tasks: Task[]) => {
     return tasks.sort((a: Task, b: Task) => {
       // Sắp xếp theo ngày mới nhất trước, rồi đến công việc đã hoàn thành
@@ -48,8 +60,8 @@ const AllDay = () => {
       if (isADone !== isBDone) {
         return isBDone - isADone; // Đưa công việc đã hoàn thành xuống dưới
       }
-      const dateA = new Date(a.valueDate).getTime();
-      const dateB = new Date(b.valueDate).getTime();
+      const dateA: number = new Date(a.valueDate).getTime();
+      const dateB: number = new Date(b.valueDate).getTime();
       return dateB - dateA; // Sắp xếp theo ngày giảm dần
     });
   };
@@ -73,13 +85,17 @@ const AllDay = () => {
   const addTask = (e: any) => {
     e.preventDefault();
     if (valueTask.trim() && valueDate.trim() !== "") {
-      setTasks((prevTasks: Task[]) => {
+      setTasks((prevTasks) => {
         setCount(count + 1);
         const newTask: Task = {
           id: count, // Generate a unique ID for the new task
           valueTask,
           valueDate,
+          title: "",
+          isDone: false,
+          buttonType: "undo",
         };
+        // @ts-ignore
         const newTasks: Task[] = [...prevTasks, newTask];
         const sortedTasks: Task[] = sortTasks(newTasks); // Sắp xếp lại danh sách
         localStorage.setItem("tasks", JSON.stringify(sortedTasks));
@@ -108,51 +124,47 @@ const AllDay = () => {
     setTasks(updatedTasks);
   };
 
-  // const dataCountCompleted: number[] = [];
-  // const dataCountNotCompleted: number[] = [];
-
-  ChartJS.register(ArcElement, Tooltip, Legend);
+  ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
   const labels: string[] = [];
-  const dataCount: number[] = [];
-  const backgroundColors: string[] = [];
+  // const dataCount: number[] = [];
+  const dataCount: {
+    completedTasksCount: number;
+    uncompletedTasksCount: number;
+  } = {
+    completedTasksCount: 0,
+    uncompletedTasksCount: 0,
+  };
+  const background = {
+    completedTasksCount: "",
+    uncompletedTasksCount: "",
+  };
 
   for (let i of sortedTasks) {
     labels.push(i.valueTask);
-    dataCount.push(i.id);
-    backgroundColors.push(i.isDone ? "#88AB8E" : "#E36414");
+    if (i.isDone) {
+      dataCount.completedTasksCount++;
+      background.completedTasksCount = "#86efac";
+    } else {
+      dataCount.uncompletedTasksCount++;
+      background.uncompletedTasksCount = "#fecaca";
+    }
+    // backgroundColors.push(i.isDone ? "#86efac" : "#fecaca");
   }
   const data = {
-    labels: labels,
+    // labels: labels,
     datasets: [
       {
         label: "Tất cả công việc",
-        data: dataCount,
-        backgroundColor: backgroundColors,
-        // borderColor: ["#163020"],
-        // borderWidth: 1,
+        data: [dataCount.completedTasksCount, dataCount.uncompletedTasksCount],
+        backgroundColor: [
+          background.completedTasksCount,
+          background.uncompletedTasksCount,
+        ],
       },
     ],
   };
-  const completedTasksCount = sortedTasks.filter((task) => task.isDone).length;
-  const uncompletedTasksCount = sortedTasks.length - completedTasksCount;
-  console.log(completedTasksCount, uncompletedTasksCount);
-  // const options = {
-  //   tooltips: {
-  //     callbacks: {
-  //       label: (tooltipItem: any, data: any) => {
-  //         const label = data.labels[tooltipItem.index];
-  //         const value =
-  //           data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index];
-  //
-  //         return (
-  //           `${label}: ${value}\n` +
-  //           `Đã hoàn thành: ${completedTasksCount}\n` +
-  //           `Chưa hoàn thành: ${uncompletedTasksCount}`
-  //         );
-  //       },
-  //     },
-  //   },
-  // };
+  // const completedTasksCount = sortedTasks.filter((task) => task.isDone).length;
+  // const uncompletedTasksCount = sortedTasks.length - completedTasksCount;
 
   const options = {
     plugins: {
@@ -163,19 +175,36 @@ const AllDay = () => {
       tooltip: {
         titleColor: "#fff",
         callbacks: {
-          label: () => {
-            return (
-              `Đã hoàn thành: ${completedTasksCount} \n` +
-              `Chưa hoàn thành: ${uncompletedTasksCount}`
+          label(tooltipItem: any, data: any): string {
+            const { label, dataIndex, dataset } = tooltipItem;
+            const { backgroundColor } = dataset;
+
+            // Xác định phần được di chuột qua (0: xanh, 1: đỏ)
+            const isUnfinishedTasks =
+              dataIndex === 1 || backgroundColor === "#fecaca";
+
+            // Lọc các công việc đã sắp xếp dựa trên việc chúng đã hoàn thành hay chưa
+            const filteredTasks = sortedTasks.filter(
+              (task) =>
+                (isUnfinishedTasks && !task.isDone) ||
+                (!isUnfinishedTasks && task.isDone),
             );
+
+            // Tạo danh sách tên công việc để hiển thị trong tooltip
+            const taskNames = filteredTasks.map((task) => task.valueTask);
+            // Kiểm tra phần được di chuột qua và hiển thị nội dung tooltip
+            return `${label} Tổng công việc ${isUnfinishedTasks ? "Chưa hoàn thành: " : "Đã hoàn thành: "} ${isUnfinishedTasks ? dataCount.uncompletedTasksCount : dataCount.completedTasksCount}
+            `;
           },
         },
       },
     },
   };
-
+  const handleSelectChange = (e: any) => {
+    setSelectedOption(e.target.value);
+  };
   return (
-    <div className={"w-full h-screen flex items-center justify-center"}>
+    <div className={"w-full h-screen flex items-center justify-center mt-80"}>
       <div>
         <div className={"italic underline"}>
           <Link href="/">Về trang chủ</Link>
@@ -197,7 +226,7 @@ const AllDay = () => {
               <div className={"flex-1 flex"}>
                 <input
                   className={
-                    "flex-1 mr-3 border-gray-400 border rounded py-2 px-4"
+                    "flex-1 mr-3 border-gray-400 focus:border-sky-500 focus:border-2 outline-none border rounded py-2 px-4"
                   }
                   type="text"
                   autoFocus={true}
@@ -206,7 +235,9 @@ const AllDay = () => {
                   onChange={handleValueInput}
                 />
                 <input
-                  className={"border-gray-400 border rounded py-2 px-4"}
+                  className={
+                    "border-gray-400 border focus:border-sky-500 focus:border-2 outline-none rounded py-2 px-4"
+                  }
                   type="date"
                   value={valueDate}
                   onChange={handleValueDate}
@@ -214,11 +245,11 @@ const AllDay = () => {
               </div>
               <button
                 className={
-                  "py-2 px-4 bg-sky-400 rounded font-bold text-white hover:bg-sky-300 ml-4"
+                  "py-3 px-4 bg-sky-400 rounded font-bold text-white hover:bg-sky-300 ml-4"
                 }
                 onClick={addTask}
               >
-                Thêm
+                <FaPlus />
               </button>
             </div>
             <div
@@ -244,21 +275,65 @@ const AllDay = () => {
             <br />
             <input
               id={"viewDay"}
-              className={"px-4 py-2 rounded border"}
+              className={
+                "px-4 py-2 rounded border focus:border-sky-500 focus:border-2 outline-none"
+              }
               type="date"
               onChange={handleViewDayInput}
             />
           </div>
           <button
-            className={"px-4 py-2 bg-sky-300 text-white font-bold ml-4"}
+            className={"px-4 py-2 bg-sky-300 text-white rounded font-bold ml-4"}
             onClick={handleViewAll}
           >
             Xem tất cả
           </button>
         </div>
-      </div>
-      <div className={"ml-20"}>
-        <Doughnut data={data} options={options} />
+        <div>
+          {selectedOption === "Tổng quan" && (
+            /*@ts-ignore*/
+            <Doughnut data={data} options={options} />
+          )}
+          {selectedOption === "Hoàn thành" && (
+            <Bar
+              data={{
+                labels: ["A", "B", "C"],
+                datasets: [
+                  {
+                    label: "Revenue",
+                    data: [200, 300, 400],
+                  },
+                ],
+              }}
+            />
+          )}
+          {/*{selectedOption === "Chưa hoàn thành" && (*/}
+          {/*  <Pie*/}
+          {/*    data={{*/}
+          {/*      labels: labels,*/}
+          {/*      datasets: [*/}
+          {/*        {*/}
+          {/*          label: "Công việc chưa hoàn thành",*/}
+          {/*          data: sortedTasks*/}
+          {/*            .filter((task) => !task.isDone)*/}
+          {/*            .map((task) => task.valueTask),*/}
+          {/*          backgroundColor: ["#fecaca"],*/}
+          {/*        },*/}
+          {/*      ],*/}
+          {/*    }}*/}
+          {/*    options={{*/}
+          {/*      responsive: true,*/}
+          {/*    }}*/}
+          {/*  />*/}
+          {/*)}*/}
+          <div className={"my-10 text-center"}>
+            <select className={"px-2 py-3"} onChange={handleSelectChange}>
+              <option value="Tổng quan">Tổng quan</option>
+              <option value="Hoàn thành">Hoàn thành</option>
+              <option value="Chưa hoàn thành">Chưa hoàn thành</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   );

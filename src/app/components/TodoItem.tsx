@@ -1,4 +1,6 @@
 import React from "react";
+import { RiDeleteBinLine } from "react-icons/ri";
+import { FaCheck } from "react-icons/fa";
 interface TodoItemProps {
   data: {
     id: number;
@@ -19,7 +21,7 @@ const TodoItem: React.FC<TodoItemProps> = ({
 }) => {
   return (
     <div
-      className={`${data.isDone ? "bg-[#88AB8E]" : "bg-[#E36414]"} w-full px-4 py-4 border-b border-white flex items-center justify-between`}
+      className={`${data.isDone ? "bg-green-300" : "bg-red-200"} w-full px-4 py-4 border-b border-white flex items-center justify-between`}
     >
       <div>
         <p
@@ -31,16 +33,18 @@ const TodoItem: React.FC<TodoItemProps> = ({
       </div>
       <div className={"flex text-white"}>
         <div
-          className={"py-2 px-4 bg-red-500 rounded font-bold cursor-pointer"}
+          className={
+            "py-3 px-4 bg-red-500 rounded font-bold cursor-pointer flex items-center justify-center"
+          }
           onClick={() => deleteTask(index)}
         >
-          Xóa
+          <RiDeleteBinLine />
         </div>
         <div
-          className={`py-2 px-4 rounded font-bold bg-sky-400 cursor-pointer ml-2`}
+          className={`py-3 px-4 rounded font-bold bg-sky-400 cursor-pointer ml-2 ${data.isDone && "hidden"}`}
           onClick={() => onDone(index)}
         >
-          Xong
+          <FaCheck />
         </div>
       </div>
     </div>

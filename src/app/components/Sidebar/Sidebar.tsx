@@ -6,7 +6,7 @@ const Sidebar = () => {
   return (
     <div className={"text-white font-bold w-full"}>
       <div>
-        <h1 className={"uppercase text-center pt-[56px] py-5 bg-gray-500 px-6"}>
+        <h1 className={"uppercase text-center mt-[56px] py-5 bg-gray-500 px-6"}>
           My app
         </h1>
         <div className={"flex items-center py-5 border-b px-6"}>

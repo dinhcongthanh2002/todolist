@@ -32,7 +32,7 @@ export default function RootLayout({
           <div className={"fixed top-0 left-0 bottom-0 w-[255px] bg-gray-400"}>
             <Sidebar />
           </div>
-          {children}
+          <div className={"ml-[255px]"}>{children}</div>
         </RecoilRoot>
       </body>
     </html>

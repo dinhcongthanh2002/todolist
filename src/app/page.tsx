@@ -3,16 +3,18 @@
 import React, { useEffect } from "react";
 import axios, { AxiosResponse } from "axios";
 import { useRecoilState } from "recoil";
-import initState, {
-  initThemeMode,
-  initValue,
-  initValueDateSelect,
-} from "./recoil/initState";
+
 import Image from "next/image";
 import { ImSun } from "react-icons/im";
 import { MdDarkMode } from "react-icons/md";
 import TodoItem from "@/app/components/TodoItem";
 import { initTasks } from "@/app/recoil/tasksAtom";
+import {
+  initState,
+  initThemeMode,
+  initValue,
+  initValueDateSelect,
+} from "@/app/recoil/initState";
 
 interface WeatherTypes {
   name: string;
@@ -42,9 +44,10 @@ interface Task {
 }
 
 export default function Home() {
+  // @ts-ignore
   const [tasks, setTasks] = useRecoilState<Task[]>(initTasks);
   const [valueDate, setValueDate] = useRecoilState<string>(initValueDateSelect);
-  const [data, setData] = useRecoilState<WeatherTypes | undefined>(initState);
+  const [data, setData] = useRecoilState(initState);
   const [inputValue, setInputValue] = useRecoilState<string>(initValue);
   const [darkMode, setDarkMode] = useRecoilState<boolean>(initThemeMode);
   // Lấy ngày hiện tại
@@ -210,6 +213,7 @@ export default function Home() {
                     <TodoItem
                       key={index}
                       index={index}
+                      // @ts-ignore
                       data={data}
                       deleteTask={deleteTask}
                       onDone={handleTaskDone}
