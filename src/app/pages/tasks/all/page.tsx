@@ -13,14 +13,16 @@ import {
   Tooltip,
   CategoryScale,
   LinearScale,
+  BarElement,
 } from "chart.js";
-import { Bar, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut, Pie } from "react-chartjs-2";
 import { FaPlus } from "react-icons/fa";
 import {
   initInputDate,
   initInputTask,
   initValueViewDay,
 } from "@/app/recoil/initState";
+import { initSelectedOption } from "@/app/recoil/selectedOptionAtom";
 
 const AllDay = () => {
   const [tasks, setTasks] = useRecoilState(initTasks);
@@ -29,7 +31,8 @@ const AllDay = () => {
   const [valueViewDay, setValueViewDay] = useRecoilState(initValueViewDay);
   // const [count, setCount] = useRecoilState(initCountState);
   const [count, setCount] = useState(1);
-  const [selectedOption, setSelectedOption] = useState("Tổng quan");
+  const [selectedOption, setSelectedOption] =
+    useRecoilState(initSelectedOption);
   // let uuid = crypto.randomUUID();
   useEffect(() => {
     // Load công việc từ local storage khi component được mount
@@ -40,10 +43,6 @@ const AllDay = () => {
         : [];
     setTasks(storedTasks);
   }, []);
-  // Lọc công việc dựa trên ngày đã chọn
-  const sortedTasks: any[] = [...tasks].filter(
-    (task) => task.valueDate === valueViewDay || valueViewDay === "all",
-  );
   interface Task {
     id: number;
     title: string;
@@ -52,6 +51,11 @@ const AllDay = () => {
     valueDate: string;
     buttonType: "done" | "undo";
   }
+  // Lọc công việc dựa trên ngày đã chọn
+  const sortedTasks = [...tasks].filter(
+    (task) => task.valueDate === valueViewDay || valueViewDay === "all",
+  );
+
   const sortTasks = (tasks: Task[]) => {
     return tasks.sort((a: Task, b: Task) => {
       // Sắp xếp theo ngày mới nhất trước, rồi đến công việc đã hoàn thành
@@ -124,9 +128,15 @@ const AllDay = () => {
     setTasks(updatedTasks);
   };
 
-  ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
+  ChartJS.register(
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+  );
   const labels: string[] = [];
-  // const dataCount: number[] = [];
   const dataCount: {
     completedTasksCount: number;
     uncompletedTasksCount: number;
@@ -175,7 +185,7 @@ const AllDay = () => {
       tooltip: {
         titleColor: "#fff",
         callbacks: {
-          label(tooltipItem: any, data: any): string {
+          label(tooltipItem: any): string {
             const { label, dataIndex, dataset } = tooltipItem;
             const { backgroundColor } = dataset;
 
@@ -183,15 +193,8 @@ const AllDay = () => {
             const isUnfinishedTasks =
               dataIndex === 1 || backgroundColor === "#fecaca";
 
-            // Lọc các công việc đã sắp xếp dựa trên việc chúng đã hoàn thành hay chưa
-            const filteredTasks = sortedTasks.filter(
-              (task) =>
-                (isUnfinishedTasks && !task.isDone) ||
-                (!isUnfinishedTasks && task.isDone),
-            );
-
             // Tạo danh sách tên công việc để hiển thị trong tooltip
-            const taskNames = filteredTasks.map((task) => task.valueTask);
+            // const taskNames = filteredTasks.map((task) => task.valueTask);
             // Kiểm tra phần được di chuột qua và hiển thị nội dung tooltip
             return `${label} Tổng công việc ${isUnfinishedTasks ? "Chưa hoàn thành: " : "Đã hoàn thành: "} ${isUnfinishedTasks ? dataCount.uncompletedTasksCount : dataCount.completedTasksCount}
             `;
@@ -203,6 +206,8 @@ const AllDay = () => {
   const handleSelectChange = (e: any) => {
     setSelectedOption(e.target.value);
   };
+
+  console.log(sortedTasks);
   return (
     <div className={"w-full h-screen flex items-center justify-center mt-80"}>
       <div>
@@ -269,7 +274,7 @@ const AllDay = () => {
             </div>
           </div>
         </div>
-        <div className={"mt-4 flex items-center justify-between"}>
+        <div className={"mt-4 flex items-center justify-between mb-20"}>
           <div>
             <label htmlFor="viewDay">Chọn ngày:</label>
             <br />
@@ -297,36 +302,59 @@ const AllDay = () => {
           {selectedOption === "Hoàn thành" && (
             <Bar
               data={{
-                labels: ["A", "B", "C"],
+                labels: sortedTasks
+                  .filter((task) => task.isDone)
+                  .map((task) => task.valueTask),
                 datasets: [
                   {
-                    label: "Revenue",
-                    data: [200, 300, 400],
+                    label: "Công việc đã hoàn thành",
+                    data: sortedTasks
+                      .filter((task) => task.isDone)
+                      .map((task) => task.id),
+                    backgroundColor: "rgba(0, 255, 0, 0.4)",
+                    borderColor: "rgba(0, 255, 0, 1)",
+                    borderWidth: 1,
                   },
                 ],
               }}
+              options={{
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                  },
+                },
+              }}
             />
           )}
-          {/*{selectedOption === "Chưa hoàn thành" && (*/}
-          {/*  <Pie*/}
-          {/*    data={{*/}
-          {/*      labels: labels,*/}
-          {/*      datasets: [*/}
-          {/*        {*/}
-          {/*          label: "Công việc chưa hoàn thành",*/}
-          {/*          data: sortedTasks*/}
-          {/*            .filter((task) => !task.isDone)*/}
-          {/*            .map((task) => task.valueTask),*/}
-          {/*          backgroundColor: ["#fecaca"],*/}
-          {/*        },*/}
-          {/*      ],*/}
-          {/*    }}*/}
-          {/*    options={{*/}
-          {/*      responsive: true,*/}
-          {/*    }}*/}
-          {/*  />*/}
-          {/*)}*/}
-          <div className={"my-10 text-center"}>
+          {selectedOption === "Chưa hoàn thành" && (
+            <Pie
+              data={{
+                labels: sortedTasks
+                  .filter((task) => !task.isDone)
+                  .map((task) => task.valueTask),
+                datasets: [
+                  {
+                    label: "Công việc chưa hoàn thành",
+                    data: sortedTasks
+                      .filter((task) => !task.isDone)
+                      .map((task) => task.id),
+                    backgroundColor: [background.uncompletedTasksCount],
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+              }}
+            />
+          )}
+          <div className={"my-10 flex items-center justify-between"}>
+            <input
+              className={
+                "px-4 py-2 rounded border focus:border-sky-500 focus:border-2 outline-none"
+              }
+              type="date"
+              onChange={handleViewDayInput}
+            />
             <select className={"px-2 py-3"} onChange={handleSelectChange}>
               <option value="Tổng quan">Tổng quan</option>
               <option value="Hoàn thành">Hoàn thành</option>
