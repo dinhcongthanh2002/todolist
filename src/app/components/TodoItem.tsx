@@ -1,6 +1,6 @@
 import React from "react";
-import { RiDeleteBinLine } from "react-icons/ri";
-import { FaCheck } from "react-icons/fa";
+import { Button } from "antd";
+import { CheckOutlined, DeleteOutlined } from "@ant-design/icons";
 interface TodoItemProps {
   data: {
     id: number;
@@ -21,31 +21,32 @@ const TodoItem: React.FC<TodoItemProps> = ({
 }) => {
   return (
     <div
-      className={`${data.isDone ? "bg-green-300" : "bg-red-200"} w-full px-4 py-4 border-b border-white flex items-center justify-between`}
+      className={`${data.isDone ? "bg-green-300" : "bg-red-200"} w-full px-4 py-2 border-b border-white flex items-center justify-between`}
     >
       <div>
         <p
-          className={`${data.isDone ? "line-through decoration-black decoration-2 text-decoration-none" : "no-underline"}`}
+          className={`${data.isDone ? "line-through decoration-[#ccc] decoration-2 text-decoration-none" : "no-underline"}`}
         >
           {data.valueTask}
         </p>
         <p className={"text-gray-500 text-sm italic"}>{data.valueDate}</p>
       </div>
       <div className={"flex text-white"}>
-        <div
-          className={
-            "py-3 px-4 bg-red-500 rounded font-bold cursor-pointer flex items-center justify-center"
-          }
+        <Button
+          type={"primary"}
+          size={"large"}
+          icon={<DeleteOutlined />}
+          danger={true}
           onClick={() => deleteTask(index)}
-        >
-          <RiDeleteBinLine />
-        </div>
-        <div
-          className={`py-3 px-4 rounded font-bold bg-sky-400 cursor-pointer ml-2 ${data.isDone && "hidden"}`}
+        />
+
+        <Button
+          className={`bg-blue-400 ml-2 ${data.isDone && "hidden"}`}
+          type={"primary"}
+          size={"large"}
+          icon={<CheckOutlined />}
           onClick={() => onDone(index)}
-        >
-          <FaCheck />
-        </div>
+        />
       </div>
     </div>
   );

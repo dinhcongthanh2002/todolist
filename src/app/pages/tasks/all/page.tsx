@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import TodoItem from "@/app/components/TodoItem";
 import { useRecoilState } from "recoil";
+import "react-toastify/dist/ReactToastify.css";
 
-import Link from "next/link";
 import { initTasks } from "@/app/recoil/tasksAtom";
 import {
   Chart as ChartJS,
@@ -16,13 +16,15 @@ import {
   BarElement,
 } from "chart.js";
 import { Bar, Doughnut, Pie } from "react-chartjs-2";
-import { FaPlus } from "react-icons/fa";
 import {
   initInputDate,
   initInputTask,
   initValueViewDay,
 } from "@/app/recoil/initState";
 import { initSelectedOption } from "@/app/recoil/selectedOptionAtom";
+import { Button, DatePicker, DatePickerProps, Input } from "antd";
+import { PlusOutlined, ScheduleOutlined } from "@ant-design/icons";
+import { Bounce, toast, ToastContainer } from "react-toastify";
 
 const AllDay = () => {
   const [tasks, setTasks] = useRecoilState(initTasks);
@@ -33,6 +35,7 @@ const AllDay = () => {
   const [count, setCount] = useState(1);
   const [selectedOption, setSelectedOption] =
     useRecoilState(initSelectedOption);
+
   // let uuid = crypto.randomUUID();
   useEffect(() => {
     // Load công việc từ local storage khi component được mount
@@ -43,14 +46,14 @@ const AllDay = () => {
         : [];
     setTasks(storedTasks);
   }, []);
-  interface Task {
+  type Task = {
     id: number;
     title: string;
     isDone: boolean;
     valueTask: string;
     valueDate: string;
     buttonType: "done" | "undo";
-  }
+  };
   // Lọc công việc dựa trên ngày đã chọn
   const sortedTasks = [...tasks].filter(
     (task) => task.valueDate === valueViewDay || valueViewDay === "all",
@@ -77,8 +80,11 @@ const AllDay = () => {
     setValueDate(e.target.value);
   };
 
-  const handleViewDayInput = (e: any) => {
-    setValueViewDay(e.target.value);
+  const handleViewDayInput: DatePickerProps["onChange"] = (
+    date: any,
+    dateString: any,
+  ) => {
+    setValueViewDay(dateString);
   };
   // Hàm xử lý sự kiện nhấn nút "Xem tất cả"
   const handleViewAll = () => {
@@ -107,6 +113,18 @@ const AllDay = () => {
       });
       setValueTask("");
       setValueDate("");
+
+      toast.success("Thêm công việc thành công!", {
+        position: "top-right",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        transition: Bounce,
+      });
     }
   };
   // Xóa công việc theo index
@@ -115,6 +133,17 @@ const AllDay = () => {
     updatedTasks.splice(index, 1);
     setTasks(updatedTasks);
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    toast.error("Xóa công việc thành công!!", {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+      transition: Bounce,
+    });
   };
   //đánh dấu hoàn thành công việc
   const handleTaskDone = (index: number) => {
@@ -126,6 +155,17 @@ const AllDay = () => {
     updatedTasks.push({ ...task, isDone: true, buttonType: "undo" });
     localStorage.setItem("tasks", JSON.stringify(updatedTasks));
     setTasks(updatedTasks);
+    toast.info("Đã hoàn thành công việc!", {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+      transition: Bounce,
+    });
   };
 
   ChartJS.register(
@@ -158,7 +198,6 @@ const AllDay = () => {
       dataCount.uncompletedTasksCount++;
       background.uncompletedTasksCount = "#fecaca";
     }
-    // backgroundColors.push(i.isDone ? "#86efac" : "#fecaca");
   }
   const data = {
     // labels: labels,
@@ -173,8 +212,6 @@ const AllDay = () => {
       },
     ],
   };
-  // const completedTasksCount = sortedTasks.filter((task) => task.isDone).length;
-  // const uncompletedTasksCount = sortedTasks.length - completedTasksCount;
 
   const options = {
     plugins: {
@@ -188,13 +225,9 @@ const AllDay = () => {
           label(tooltipItem: any): string {
             const { label, dataIndex, dataset } = tooltipItem;
             const { backgroundColor } = dataset;
-
             // Xác định phần được di chuột qua (0: xanh, 1: đỏ)
             const isUnfinishedTasks =
               dataIndex === 1 || backgroundColor === "#fecaca";
-
-            // Tạo danh sách tên công việc để hiển thị trong tooltip
-            // const taskNames = filteredTasks.map((task) => task.valueTask);
             // Kiểm tra phần được di chuột qua và hiển thị nội dung tooltip
             return `${label} Tổng công việc ${isUnfinishedTasks ? "Chưa hoàn thành: " : "Đã hoàn thành: "} ${isUnfinishedTasks ? dataCount.uncompletedTasksCount : dataCount.completedTasksCount}
             `;
@@ -206,98 +239,90 @@ const AllDay = () => {
   const handleSelectChange = (e: any) => {
     setSelectedOption(e.target.value);
   };
-
-  console.log(sortedTasks);
   return (
-    <div className={"w-full h-screen flex items-center justify-center mt-80"}>
-      <div>
-        <div className={"italic underline"}>
-          <Link href="/">Về trang chủ</Link>
-        </div>
-        <div
-          className={
-            "w-[750px] max-h-[600px] h-[600px] bg-gray-100 rounded shadow-2xl px-10"
-          }
-        >
-          <h1
+    <div className={"w-full my-10"}>
+      <div className={"grid grid-cols-2 gap-10"}>
+        <div>
+          <div
             className={
-              "text-center uppercase text-4xl font-bold py-4 border-b border-gray-400"
+              "w-[750px] max-h-[600px] h-[600px] bg-gray-100 rounded shadow-2xl px-10"
             }
           >
-            quản lý tất cả công việc
-          </h1>
-          <div className={"my-5"}>
-            <div className={"flex items-center"}>
-              <div className={"flex-1 flex"}>
-                <input
-                  className={
-                    "flex-1 mr-3 border-gray-400 focus:border-sky-500 focus:border-2 outline-none border rounded py-2 px-4"
-                  }
-                  type="text"
-                  autoFocus={true}
-                  value={valueTask}
-                  placeholder={"Thêm công việc mới"}
-                  onChange={handleValueInput}
-                />
-                <input
-                  className={
-                    "border-gray-400 border focus:border-sky-500 focus:border-2 outline-none rounded py-2 px-4"
-                  }
-                  type="date"
-                  value={valueDate}
-                  onChange={handleValueDate}
+            <h1
+              className={
+                "text-center uppercase text-4xl font-bold py-4 border-b border-gray-400"
+              }
+            >
+              quản lý tất cả công việc
+            </h1>
+            <div className={"my-5"}>
+              <div className={"flex items-center"}>
+                <div className={"flex-1 flex"}>
+                  <Input
+                    type="text"
+                    placeholder={"Thêm công việc mới"}
+                    value={valueTask}
+                    autoFocus={true}
+                    onChange={handleValueInput}
+                    allowClear
+                    size={"large"}
+                    prefix={<ScheduleOutlined />}
+                  />
+                  <Input
+                    className={"mx-3"}
+                    type={"date"}
+                    style={{ width: 200 }}
+                    value={valueDate}
+                    onChange={handleValueDate}
+                  />
+                </div>
+                <Button
+                  type={"default"}
+                  icon={<PlusOutlined />}
+                  onClick={addTask}
                 />
               </div>
-              <button
-                className={
-                  "py-3 px-4 bg-sky-400 rounded font-bold text-white hover:bg-sky-300 ml-4"
-                }
-                onClick={addTask}
+              <div className={" flex items-center justify-between"}>
+                <div>
+                  <label htmlFor="viewDay">Chọn ngày:</label>
+                  <br />
+                  {/*<Input*/}
+                  {/*  type={"date"}*/}
+                  {/*  style={{ width: 200 }}*/}
+                  {/*  onChange={handleViewDayInput}*/}
+                  {/*/>*/}
+                  <DatePicker onChange={handleViewDayInput} />
+                </div>
+                <Button type={"default"} size={"large"} onClick={handleViewAll}>
+                  Xem tất cả
+                </Button>
+              </div>
+              <div
+                className={"w-full bg-[#ccc] mt-4 max-h-[375px] overflow-auto"}
               >
-                <FaPlus />
-              </button>
-            </div>
-            <div
-              className={"w-full bg-[#ccc] mt-4 max-h-[425px] overflow-auto"}
-            >
-              {/*item*/}
-              {sortedTasks.length > 0 &&
-                sortedTasks.map((task, index: number) => (
-                  <TodoItem
-                    key={index}
-                    index={index}
-                    data={task}
-                    deleteTask={deleteTask}
-                    onDone={handleTaskDone}
-                  />
-                ))}
+                {/*item*/}
+                {sortedTasks.length > 0 &&
+                  sortedTasks.map((task, index: number) => (
+                    <TodoItem
+                      key={index}
+                      index={index}
+                      data={task}
+                      deleteTask={deleteTask}
+                      onDone={handleTaskDone}
+                    />
+                  ))}
+              </div>
             </div>
           </div>
         </div>
-        <div className={"mt-4 flex items-center justify-between mb-20"}>
-          <div>
-            <label htmlFor="viewDay">Chọn ngày:</label>
-            <br />
-            <input
-              id={"viewDay"}
-              className={
-                "px-4 py-2 rounded border focus:border-sky-500 focus:border-2 outline-none"
-              }
-              type="date"
-              onChange={handleViewDayInput}
-            />
-          </div>
-          <button
-            className={"px-4 py-2 bg-sky-300 text-white rounded font-bold ml-4"}
-            onClick={handleViewAll}
-          >
-            Xem tất cả
-          </button>
-        </div>
+
         <div>
+          <h1 className={"uppercase text-4xl font-bold text-center mb-6"}>
+            Biểu đồ công việc
+          </h1>
           {selectedOption === "Tổng quan" && (
             /*@ts-ignore*/
-            <Doughnut data={data} options={options} />
+            <Doughnut data={data} options={options} className={"mx-52"} />
           )}
           {selectedOption === "Hoàn thành" && (
             <Bar
@@ -328,6 +353,7 @@ const AllDay = () => {
           )}
           {selectedOption === "Chưa hoàn thành" && (
             <Pie
+              className={"mx-52"}
               data={{
                 labels: sortedTasks
                   .filter((task) => !task.isDone)
@@ -347,14 +373,8 @@ const AllDay = () => {
               }}
             />
           )}
-          <div className={"my-10 flex items-center justify-between"}>
-            <input
-              className={
-                "px-4 py-2 rounded border focus:border-sky-500 focus:border-2 outline-none"
-              }
-              type="date"
-              onChange={handleViewDayInput}
-            />
+          <div className={"mt-10 flex items-center justify-between"}>
+            <DatePicker onChange={handleViewDayInput} />
             <select className={"px-2 py-3"} onChange={handleSelectChange}>
               <option value="Tổng quan">Tổng quan</option>
               <option value="Hoàn thành">Hoàn thành</option>
@@ -363,6 +383,19 @@ const AllDay = () => {
           </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        transition={Bounce}
+      />
     </div>
   );
 };

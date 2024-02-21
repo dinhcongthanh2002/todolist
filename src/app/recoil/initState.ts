@@ -8,7 +8,7 @@ export const initState: RecoilState<[]> = atom({
 });
 export const initValue: RecoilState<string> = atom({
   key: "inputValue",
-  default: "Ha noi",
+  default: "Hà nội",
 });
 export const initThemeMode: RecoilState<boolean> = atom({
   key: "darkMode",

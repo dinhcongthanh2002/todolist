@@ -1,13 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
-import axios, { AxiosResponse } from "axios";
+import React, { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
-
-import Image from "next/image";
-import { ImSun } from "react-icons/im";
-import { MdDarkMode } from "react-icons/md";
-import TodoItem from "@/app/components/TodoItem";
+import { Button, Image, Modal } from "antd";
 import { initTasks } from "@/app/recoil/tasksAtom";
 import {
   initState,
@@ -15,6 +10,11 @@ import {
   initValue,
   initValueDateSelect,
 } from "@/app/recoil/initState";
+import { WiHumidity } from "react-icons/wi";
+import TodoItem from "@/app/components/TodoItem";
+import { weatherState } from "@/app/recoil/weather/weatherState";
+import { getWeatherData } from "@/app/services/weatherDataService";
+import { CarryOutOutlined } from "@ant-design/icons";
 
 interface WeatherTypes {
   name: string;
@@ -44,16 +44,54 @@ interface Task {
 }
 
 export default function Home() {
+  const [weatherData, setWeatherData] = useRecoilState(weatherState);
+  const [inputValue, setInputValue] = useRecoilState<string>(initValue);
+
+  const today: Date = new Date();
+  const day: number = today.getDate();
+  // Tháng trong JavaScript bắt đầu từ 0
+  const month: number = today.getMonth() + 1;
+  const year: number = today.getFullYear();
+
+  const formattedDate = `${day} THÁNG ${month} NĂM ${year}`;
+
+  const sunrise: number = weatherData.sys?.sunrise;
+  const sunset: number = weatherData.sys?.sunset;
+
+  const sunriseDate = new Date(sunrise * 1000);
+  const sunsetDate = new Date(sunset * 1000);
+
+  const sunriseHour = sunriseDate.getHours();
+  const sunriseMinute = sunriseDate.getMinutes();
+  const sunsetHour = sunsetDate.getHours();
+  const sunsetMinute = sunsetDate.getMinutes();
+
+  const pressureValue: number = weatherData?.main?.pressure;
+  const pressureStatus: string = getPressureStatus(pressureValue);
   // @ts-ignore
   const [tasks, setTasks] = useRecoilState<Task[]>(initTasks);
   const [valueDate, setValueDate] = useRecoilState<string>(initValueDateSelect);
-  const [data, setData] = useRecoilState(initState);
-  const [inputValue, setInputValue] = useRecoilState<string>(initValue);
-  const [darkMode, setDarkMode] = useRecoilState<boolean>(initThemeMode);
-  // Lấy ngày hiện tại
-  // const today = new Date().toISOString().slice(0, 10);
-  // const curentDay = tasks.filter((task) => task.valueDate === today);
   const todayTasks = tasks.filter((task) => task.valueDate === valueDate);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getWeatherData(inputValue);
+      setWeatherData(data);
+    };
+    fetchData();
+  }, [inputValue]);
+
+  function getPressureStatus(pressure: any): string {
+    switch (true) {
+      case pressure < 980:
+        return "thấp";
+      case pressure >= 980 && pressure < 1010:
+        return "Bình thường";
+      default:
+        return "cao";
+    }
+  }
+
   useEffect(() => {
     // Load tasks from local storage on component mount
     const storedTasksString = localStorage.getItem("tasks");
@@ -62,33 +100,9 @@ export default function Home() {
       : [];
     setTasks(storedTasks as Task[]);
   }, []);
-  useEffect(() => {
-    async function getUser() {
-      try {
-        const response: AxiosResponse<WeatherTypes> = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?q=${inputValue}&appid=e863e3bd98c324a84b149058fc67df5a&lang=vi`,
-        );
-        setData(response.data);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    getUser();
-  }, [inputValue]);
-
-  const handleInputValue = (event: any) => {
-    setInputValue(event.target.value);
-  };
-
   const handleInputValueDate = (e: any) => {
     setValueDate(e.target.value);
   };
-
-  const toogleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
   const deleteTask = (index: number) => {
     const updatedTasks = [...tasks];
     updatedTasks.splice(index, 1);
@@ -107,96 +121,101 @@ export default function Home() {
     setTasks(updatedTasks);
   };
   return (
-    <div
-      className={`${darkMode && "dark"} bg-neutral-100 dark:bg-neutral-600 h-screen `}
-    >
-      <div className={"dark:bg-neutral-600"}>
-        <div className={"w-full text-center pt-24"}>
-          <input
-            className={"px-4 py-2 border-[1px] rounded"}
-            type="date"
-            onChange={handleInputValueDate}
-          />
-          <div>
-            <input
-              className=" px-2 py-1 m-5 border"
-              placeholder="Nhập tên thành phố"
-              type="text"
-              onChange={handleInputValue}
-            />
-            <button
-              className={
-                "text-sm font-bold bg-cyan-400 px-3 py-2 rounded text-white hover:bg-cyan-300 dark:bg-cyan-100 dark:text-black"
-              }
-              onClick={toogleDarkMode}
-            >
-              {darkMode ? <MdDarkMode /> : <ImSun />}
-            </button>
-          </div>
-        </div>
-        <div className={"flex items-center justify-center h-screen"}>
-          {/*body*/}
-          <div className={"text-white uppercase"}>
-            <div
-              className={
-                "w-[430px] min-h-[430px] bg-sky-300 rounded-3xl shadow-xl"
-              }
-            >
-              <p className={"uppercase text-center font-medium mt-5"}>
-                Thời tiết hôm nay
-              </p>
-              <div className={"text-center"}>
-                <p className={"font-bold m-9 text-2xl"}>{data?.name}</p>
-                <h1 className={"text-7xl font-medium"}>
-                  {data?.main?.temp
-                    ? Math.round(data?.main?.temp - 273.15)
-                    : null}
-                </h1>
-                <div className={"flex justify-center items-center m-2"}>
-                  <Image
-                    width={100}
-                    height={100}
-                    src={`https://openweathermap.org/img/wn/04d@2x.png`}
-                    alt="this is sw"
-                  />
+    <div>
+      <div className={"flex flex-col items-center justify-center mt-10"}>
+        <div className={"w-[632px] h-auto"}>
+          <h1 className={"uppercase my-3 text-primary"}>{formattedDate}</h1>
+          {/*Thời tiết*/}
+          <div className={"w-full min-h-[236px] p-3 bg-white"}>
+            <div>
+              {/*header*/}
+              <div className={"flex items-center justify-between"}>
+                <div className={"flex items-center"}>
+                  {/*ICON*/}
+                  <div className={"mx-3"}>
+                    <Image
+                      width={80}
+                      src={`https://openweathermap.org/img/wn/${weatherData?.weather ? weatherData?.weather[0]?.icon : null}@2x.png`}
+                    />
+                  </div>
+                  <div className={"flex items-end"}>
+                    <p className={"text-5xl text-primary font-bold"}>
+                      {weatherData?.main?.temp
+                        ? Math.round(weatherData?.main?.temp - 273.15)
+                        : null}
+                      °
+                    </p>
+                    <p className={"text-gray-400 text-xl"}>
+                      /
+                      {weatherData?.main?.temp
+                        ? Math.round(weatherData?.main?.temp_max - 273.15)
+                        : null}
+                      °
+                    </p>
+                  </div>
                 </div>
-                <p>{`Quốc gia ${data?.sys?.country}`}</p>
-              </div>
-              <div
-                className={
-                  "text-center  flex justify-between items-center mt-14 mb-4 mx-3"
-                }
-              >
-                <div>
-                  <p>Độ ẩm</p>
-                  <p>{data?.main?.humidity}</p>
-                </div>
-                <div>
-                  <p>Tốc độ gió</p>
-                  <p>
-                    {data?.wind?.speed
-                      ? (data?.wind?.speed * 3.6).toFixed(2)
-                      : null}
-                    Km/h
+                {/*HUMIDITY*/}
+                <div className={"mr-10"}>
+                  <p
+                    className={
+                      "flex items-center text-gray-400 font-bold text-primary text-base"
+                    }
+                  >
+                    {<WiHumidity className={"text-2xl"} />}{" "}
+                    {weatherData?.main?.humidity}%
                   </p>
                 </div>
-                <div>
-                  <p>Mặt trời mọc</p>
-                  <p>{data?.sys?.sunrise}</p>
+              </div>
+              {/*DESCRIPTION*/}
+              <h1 className={"py-4 text-lg text-primary"}>
+                {weatherData?.weather
+                  ? weatherData?.weather[0]?.description
+                  : null}
+              </h1>
+              {/*FOOTER*/}
+              <div className={"text-base grid grid-cols-2 grid-rows-2 gap-x-7"}>
+                {/*ITEM1*/}
+                <div className={"py-2 border-b"}>
+                  <div className={"flex items-center justify-between"}>
+                    Mặt trời mọc{" "}
+                    <p className={"text-lg text-primary font-bold"}>
+                      {sunriseHour}:{sunriseMinute}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p>Mặt trời lặn</p>
-                  <p>{data?.sys?.sunset}</p>
+                {/*ITEM 2*/}
+                <div className={"py-2 border-b"}>
+                  <div className={"flex items-center justify-between"}>
+                    Áp suất{" "}
+                    <p className={"text-lg text-primary font-bold"}>
+                      {pressureStatus}
+                    </p>
+                  </div>
+                </div>
+                {/*ITEM 3*/}
+                <div className={"py-2"}>
+                  <div className={"flex items-center justify-between"}>
+                    Mặt trời lặn{" "}
+                    <p className={"text-lg text-primary font-bold"}>
+                      {sunsetHour}:{sunsetMinute}
+                    </p>
+                  </div>
+                </div>
+                {/*ITEM 4*/}
+                <div className={"py-2"}>
+                  <div className={"flex items-center justify-between "}>
+                    Tốc độ gió{" "}
+                    <p className={"text-lg text-primary font-bold"}>
+                      {(weatherData?.wind?.speed * 3.6).toFixed(2)} km/h
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div
-            className={
-              "w-[430px] min-h-[430px] ml-10 bg-gray-100 rounded-3xl shadow-xl"
-            }
-          >
+          {/*TODOLIST*/}
+          <div className={"w-full min-h-[430px] mt-5 bg-white"}>
             <div className={"p-4"}>
               <h1
                 className={
@@ -205,20 +224,43 @@ export default function Home() {
               >
                 Công việc ngày hôm nay
               </h1>
-              <div
-                className={"w-full bg-[#ccc] mt-4 max-h-[360px] overflow-auto"}
-              >
-                {todayTasks.length > 0 &&
-                  todayTasks.map((data, index: number) => (
-                    <TodoItem
-                      key={index}
-                      index={index}
-                      // @ts-ignore
-                      data={data}
-                      deleteTask={deleteTask}
-                      onDone={handleTaskDone}
-                    />
-                  ))}
+              <div className={"w-full mt-4 max-h-[360px] overflow-auto"}>
+                <input
+                  className={"px-4 py-2 border-[1px] rounded"}
+                  type="date"
+                  // value={todayFormatted}
+                  // disabled={true}
+                  onChange={handleInputValueDate}
+                />
+                <div
+                  className={
+                    "w-full mt-4 min-h-[300px] max-h-[360px] overflow-auto"
+                  }
+                >
+                  {todayTasks.length > 0 ? (
+                    todayTasks.map((data, index: number) => (
+                      <TodoItem
+                        key={index}
+                        index={index}
+                        // @ts-ignore
+                        data={data}
+                        deleteTask={deleteTask}
+                        onDone={handleTaskDone}
+                      />
+                    ))
+                  ) : (
+                    <div
+                      className={
+                        "flex flex-col items-center justify-center min-h-[300px]"
+                      }
+                    >
+                      <p className={"text-6xl "}>¯⁠\⁠_⁠(⁠ツ⁠)⁠_⁠/⁠¯</p>
+                      <p className={"py-6 text-lg italic text-gray-400"}>
+                        Không có công việc nào...
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
