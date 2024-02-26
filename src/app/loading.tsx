@@ -1,11 +1,15 @@
 import React from "react";
-import { Skeleton } from "antd";
+import { Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const Loading = () => {
   return (
-    <div className={"p-10 py-20"}>
-      <Skeleton paragraph={{ rows: 20 }} />
-    </div>
+    <Spin
+      indicator={
+        <LoadingOutlined style={{ fontSize: 50, color: "#eb6e4b" }} spin />
+      }
+      fullscreen
+    />
   );
 };
 

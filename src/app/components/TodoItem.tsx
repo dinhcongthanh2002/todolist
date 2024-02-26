@@ -21,15 +21,21 @@ const TodoItem: React.FC<TodoItemProps> = ({
 }) => {
   return (
     <div
-      className={`${data.isDone ? "bg-green-300" : "bg-red-200"} w-full px-4 py-2 border-b border-white flex items-center justify-between`}
+      className={`${data.isDone ? "bg-white" : "bg-white"} w-full px-4 py-2 border-b border-[#ccc] flex items-center justify-between`}
     >
-      <div>
+      <div
+        className={`${data.isDone ? "font-bold" : "font-extralight"} text-primary`}
+      >
         <p
-          className={`${data.isDone ? "line-through decoration-[#ccc] decoration-2 text-decoration-none" : "no-underline"}`}
+          className={`${data.isDone ? "line-through decoration-primary decoration-2 text-decoration-none" : "no-underline"}`}
         >
           {data.valueTask}
         </p>
-        <p className={"text-gray-500 text-sm italic"}>{data.valueDate}</p>
+        <p
+          className={`${data.isDone ? "line-through decoration-primary decoration-2 text-decoration-none" : "no-underline"} text-gray-500 text-sm italic`}
+        >
+          {data.valueDate}
+        </p>
       </div>
       <div className={"flex text-white"}>
         <Button
@@ -41,9 +47,10 @@ const TodoItem: React.FC<TodoItemProps> = ({
         />
 
         <Button
-          className={`bg-blue-400 ml-2 ${data.isDone && "hidden"}`}
+          className={`bg-blue-400 ml-2`}
           type={"primary"}
           size={"large"}
+          disabled={data.isDone}
           icon={<CheckOutlined />}
           onClick={() => onDone(index)}
         />

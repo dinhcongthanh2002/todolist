@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import TodoItem from "@/app/components/TodoItem";
 import { useRecoilState } from "recoil";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -22,9 +21,25 @@ import {
   initValueViewDay,
 } from "@/app/recoil/initState";
 import { initSelectedOption } from "@/app/recoil/selectedOptionAtom";
-import { Button, DatePicker, DatePickerProps, Input } from "antd";
-import { PlusOutlined, ScheduleOutlined } from "@ant-design/icons";
+import {
+  Button,
+  Col,
+  DatePicker,
+  DatePickerProps,
+  Input,
+  List,
+  Row,
+  Select,
+} from "antd";
+import {
+  CheckOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  ScheduleOutlined,
+} from "@ant-design/icons";
 import { Bounce, toast, ToastContainer } from "react-toastify";
+import VirtualList from "rc-virtual-list";
+import CountTodo from "@/app/components/CountTodo";
 
 const AllDay = () => {
   const [tasks, setTasks] = useRecoilState(initTasks);
@@ -193,14 +208,13 @@ const AllDay = () => {
     labels.push(i.valueTask);
     if (i.isDone) {
       dataCount.completedTasksCount++;
-      background.completedTasksCount = "#86efac";
+      background.completedTasksCount = "#75b364";
     } else {
       dataCount.uncompletedTasksCount++;
-      background.uncompletedTasksCount = "#fecaca";
+      background.uncompletedTasksCount = "#fbbe83";
     }
   }
   const data = {
-    // labels: labels,
     datasets: [
       {
         label: "Tất cả công việc",
@@ -236,31 +250,47 @@ const AllDay = () => {
       },
     },
   };
-  const handleSelectChange = (e: any) => {
-    setSelectedOption(e.target.value);
+  const handleSelectChange = (value: string) => {
+    setSelectedOption(value);
+  };
+  const ContainerHeight: number = 400;
+  const onScroll = (e: React.UIEvent<HTMLElement, UIEvent>) => {
+    if (
+      Math.abs(
+        e.currentTarget.scrollHeight -
+          e.currentTarget.scrollTop -
+          ContainerHeight,
+      ) <= 1
+    ) {
+      return tasks;
+    }
   };
   return (
-    <div className={"w-full my-10"}>
-      <div className={"grid grid-cols-2 gap-10"}>
-        <div>
-          <div
-            className={
-              "w-[750px] max-h-[600px] h-[600px] bg-gray-100 rounded shadow-2xl px-10"
-            }
-          >
-            <h1
-              className={
-                "text-center uppercase text-4xl font-bold py-4 border-b border-gray-400"
-              }
-            >
-              quản lý tất cả công việc
-            </h1>
+    <div className={"my-5"}>
+      <Row gutter={[16, 16]} justify={"space-around"}>
+        <Col span={11} className={"bg-white rounded-xl"}>
+          <CountTodo
+            name={"Total work completed"}
+            count={dataCount.completedTasksCount}
+            type={"completed"}
+          />
+        </Col>
+        <Col span={11} className={"bg-white rounded-xl"}>
+          <CountTodo
+            name={"Total work not completed"}
+            count={dataCount.uncompletedTasksCount}
+            type={"not completed"}
+          />
+        </Col>
+        <Col span={11} className={"bg-white rounded-xl"}>
+          <div className={"p-3"}>
+            <h1 className={"text-xl text-primary"}>Todo list</h1>
             <div className={"my-5"}>
               <div className={"flex items-center"}>
                 <div className={"flex-1 flex"}>
                   <Input
                     type="text"
-                    placeholder={"Thêm công việc mới"}
+                    placeholder={"Add new job"}
                     value={valueTask}
                     autoFocus={true}
                     onChange={handleValueInput}
@@ -282,107 +312,144 @@ const AllDay = () => {
                   onClick={addTask}
                 />
               </div>
-              <div className={" flex items-center justify-between"}>
+              <div className={"py-4 flex items-center justify-between"}>
                 <div>
-                  <label htmlFor="viewDay">Chọn ngày:</label>
-                  <br />
-                  {/*<Input*/}
-                  {/*  type={"date"}*/}
-                  {/*  style={{ width: 200 }}*/}
-                  {/*  onChange={handleViewDayInput}*/}
-                  {/*/>*/}
                   <DatePicker onChange={handleViewDayInput} />
                 </div>
-                <Button type={"default"} size={"large"} onClick={handleViewAll}>
-                  Xem tất cả
+
+                <Button
+                  type={"default"}
+                  size={"middle"}
+                  onClick={handleViewAll}
+                >
+                  All
                 </Button>
               </div>
-              <div
-                className={"w-full bg-[#ccc] mt-4 max-h-[375px] overflow-auto"}
-              >
-                {/*item*/}
-                {sortedTasks.length > 0 &&
-                  sortedTasks.map((task, index: number) => (
-                    <TodoItem
-                      key={index}
-                      index={index}
-                      data={task}
-                      deleteTask={deleteTask}
-                      onDone={handleTaskDone}
-                    />
-                  ))}
-              </div>
+              <List size="small">
+                <VirtualList
+                  data={sortedTasks}
+                  height={ContainerHeight}
+                  itemHeight={47}
+                  itemKey="email"
+                  onScroll={onScroll}
+                >
+                  {(task: any, index: number) => (
+                    <List.Item
+                      key={task.id}
+                      actions={[
+                        <Button
+                          type={"primary"}
+                          size={"middle"}
+                          icon={<DeleteOutlined />}
+                          danger={true}
+                          onClick={() => deleteTask(index)}
+                        />,
+                        <Button
+                          className={`bg-blue-400`}
+                          type={"primary"}
+                          size={"middle"}
+                          icon={<CheckOutlined />}
+                          disabled={!!task.isDone}
+                          onClick={() => handleTaskDone(index)}
+                        />,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        className={`${task.isDone ? "font-bold" : "font-extralight"}`}
+                        title={
+                          <p
+                            className={`${task.isDone ? "line-through decoration-primary decoration-1 text-decoration-none" : "no-underline"} text-primary`}
+                          >
+                            {task.valueTask}
+                          </p>
+                        }
+                        description={
+                          <p
+                            className={`${task.isDone ? "line-through decoration-primary decoration-1 text-decoration-none" : "no-underline"} italic text-xs`}
+                          >
+                            {task.valueDate}
+                          </p>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                </VirtualList>
+              </List>
             </div>
           </div>
-        </div>
-
-        <div>
-          <h1 className={"uppercase text-4xl font-bold text-center mb-6"}>
-            Biểu đồ công việc
-          </h1>
-          {selectedOption === "Tổng quan" && (
-            /*@ts-ignore*/
-            <Doughnut data={data} options={options} className={"mx-52"} />
-          )}
-          {selectedOption === "Hoàn thành" && (
-            <Bar
-              data={{
-                labels: sortedTasks
-                  .filter((task) => task.isDone)
-                  .map((task) => task.valueTask),
-                datasets: [
-                  {
-                    label: "Công việc đã hoàn thành",
-                    data: sortedTasks
+        </Col>
+        {/*CHART*/}
+        <Col span={11} className={"bg-white rounded-xl"}>
+          <div className={"p-3"}>
+            <h1 className={"text-xl text-primary"}>Work chart</h1>
+            <div className={"mt-5 flex items-center justify-between"}>
+              <DatePicker onChange={handleViewDayInput} />
+              <Select
+                defaultValue="Overview"
+                style={{ width: 120 }}
+                onChange={handleSelectChange}
+                options={[
+                  { value: "Overview", label: "Overview" },
+                  { value: "Accomplished", label: "Accomplished" },
+                  { value: "Unaccomplished", label: "Unaccomplished" },
+                ]}
+              />
+            </div>
+            <div className={"mt-10"}>
+              {selectedOption === "Overview" && (
+                /*@ts-ignore*/
+                <Doughnut data={data} options={options} className={"mx-52"} />
+              )}
+              {selectedOption === "Accomplished" && (
+                <Bar
+                  data={{
+                    labels: sortedTasks
                       .filter((task) => task.isDone)
-                      .map((task) => task.id),
-                    backgroundColor: "rgba(0, 255, 0, 0.4)",
-                    borderColor: "rgba(0, 255, 0, 1)",
-                    borderWidth: 1,
-                  },
-                ],
-              }}
-              options={{
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                  },
-                },
-              }}
-            />
-          )}
-          {selectedOption === "Chưa hoàn thành" && (
-            <Pie
-              className={"mx-52"}
-              data={{
-                labels: sortedTasks
-                  .filter((task) => !task.isDone)
-                  .map((task) => task.valueTask),
-                datasets: [
-                  {
-                    label: "Công việc chưa hoàn thành",
-                    data: sortedTasks
-                      .filter((task) => !task.isDone)
-                      .map((task) => task.id),
-                    backgroundColor: [background.uncompletedTasksCount],
-                  },
-                ],
-              }}
-              options={{
-                responsive: true,
-              }}
-            />
-          )}
-          <div className={"mt-10 flex items-center justify-between"}>
-            <DatePicker onChange={handleViewDayInput} />
-            <select className={"px-2 py-3"} onChange={handleSelectChange}>
-              <option value="Tổng quan">Tổng quan</option>
-              <option value="Hoàn thành">Hoàn thành</option>
-              <option value="Chưa hoàn thành">Chưa hoàn thành</option>
-            </select>
+                      .map((task) => task.valueTask),
+                    datasets: [
+                      {
+                        label: "Work completed",
+                        data: sortedTasks
+                          .filter((task) => task.isDone)
+                          .map((task) => task.id),
+                        backgroundColor: "#75b364",
+                        borderColor: "#c8d67d",
+                        borderWidth: 1,
+                      },
+                    ],
+                  }}
+                  options={{
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                      },
+                    },
+                  }}
+                />
+              )}
+              {selectedOption === "Unaccomplished" && (
+                <Pie
+                  className={"mx-52"}
+                  data={{
+                    datasets: [
+                      {
+                        label: "Công việc chưa hoàn thành",
+                        data: sortedTasks
+                          .filter((task) => !task.isDone)
+                          .map((task) => task.id),
+                        backgroundColor: [background.uncompletedTasksCount],
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                  }}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </Col>
+      </Row>
       <ToastContainer
         position="top-right"
         autoClose={1000}

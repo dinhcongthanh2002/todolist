@@ -1,41 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRecoilState } from "recoil";
-import { Button, Image, Modal } from "antd";
+import { DatePicker, DatePickerProps, Image } from "antd";
 import { initTasks } from "@/app/recoil/tasksAtom";
-import {
-  initState,
-  initThemeMode,
-  initValue,
-  initValueDateSelect,
-} from "@/app/recoil/initState";
+import { initValue, initValueDateSelect } from "@/app/recoil/initState";
 import { WiHumidity } from "react-icons/wi";
 import TodoItem from "@/app/components/TodoItem";
 import { weatherState } from "@/app/recoil/weather/weatherState";
 import { getWeatherData } from "@/app/services/weatherDataService";
-import { CarryOutOutlined } from "@ant-design/icons";
 
-interface WeatherTypes {
-  name: string;
-  main: {
-    temp: number;
-    humidity: number;
-  };
-  weather: [
-    {
-      description: string;
-    },
-  ];
-  wind: {
-    speed: number;
-  };
-  sys: {
-    sunrise: number;
-    sunset: number;
-    country: string;
-  };
-}
 interface Task {
   valueTask: string;
   valueDate: string;
@@ -100,8 +74,11 @@ export default function Home() {
       : [];
     setTasks(storedTasks as Task[]);
   }, []);
-  const handleInputValueDate = (e: any) => {
-    setValueDate(e.target.value);
+  const handleInputValueDate: DatePickerProps["onChange"] = (
+    date: any,
+    dateString: any,
+  ) => {
+    setValueDate(dateString);
   };
   const deleteTask = (index: number) => {
     const updatedTasks = [...tasks];
@@ -158,7 +135,7 @@ export default function Home() {
                 <div className={"mr-10"}>
                   <p
                     className={
-                      "flex items-center text-gray-400 font-bold text-primary text-base"
+                      "flex items-center font-bold text-primary text-base"
                     }
                   >
                     {<WiHumidity className={"text-2xl"} />}{" "}
@@ -219,19 +196,13 @@ export default function Home() {
             <div className={"p-4"}>
               <h1
                 className={
-                  "uppercase text-center text-2xl font-bold border-b border-gray-400 py-4"
+                  "uppercase text-center text-2xl font-extralight border-b border-gray-400 py-4"
                 }
               >
-                Công việc ngày hôm nay
+                TODAY'S WORK
               </h1>
               <div className={"w-full mt-4 max-h-[360px] overflow-auto"}>
-                <input
-                  className={"px-4 py-2 border-[1px] rounded"}
-                  type="date"
-                  // value={todayFormatted}
-                  // disabled={true}
-                  onChange={handleInputValueDate}
-                />
+                <DatePicker onChange={handleInputValueDate} />
                 <div
                   className={
                     "w-full mt-4 min-h-[300px] max-h-[360px] overflow-auto"
@@ -256,7 +227,7 @@ export default function Home() {
                     >
                       <p className={"text-6xl "}>¯⁠\⁠_⁠(⁠ツ⁠)⁠_⁠/⁠¯</p>
                       <p className={"py-6 text-lg italic text-gray-400"}>
-                        Không có công việc nào...
+                        There are no jobs...
                       </p>
                     </div>
                   )}
