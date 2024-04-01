@@ -91,7 +91,7 @@ const AllDay = () => {
     setValueTask(e.target.value);
   };
 
-  const handleValueDate = (e: any): void => {
+  const handleValueDate = (e: any) => {
     setValueDate(e.target.value);
   };
 
@@ -128,7 +128,6 @@ const AllDay = () => {
       });
       setValueTask("");
       setValueDate("");
-
       toast.success("Thêm công việc thành công!", {
         position: "top-right",
         autoClose: 1000,
@@ -305,9 +304,16 @@ const AllDay = () => {
                     value={valueDate}
                     onChange={handleValueDate}
                   />
+                  {/*<DatePicker*/}
+                  {/*  placeholder={"Add new date"}*/}
+                  {/*  className={"mx-3"}*/}
+                  {/*  format={"DD-MM-YYYY"}*/}
+                  {/*  onChange={handleValueDate}*/}
+                  {/*/>*/}
                 </div>
                 <Button
                   type={"default"}
+                  size={"large"}
                   icon={<PlusOutlined />}
                   onClick={addTask}
                 />

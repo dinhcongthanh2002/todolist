@@ -28,6 +28,6 @@ export const initValueDateSelect: RecoilState<string> = atom({
 });
 export const initValueViewDay: RecoilState<string> = atom({
   key: "inputValueViewDay",
-  default: "",
+  default: "all",
 });
 export default initState;
